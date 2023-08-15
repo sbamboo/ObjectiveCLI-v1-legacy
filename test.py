@@ -1,6 +1,7 @@
 import baseTypes as bt
 
-window = bt.window()
-circle = window.create_circle("#",(20,20),7,"f_Red")
-window.move(circle,(30,15))
+window = bt.window(drawOnUpdate=False)
+
+circle = window.create_circle("#",(20,10),7,color="f_Red")
+window._rem(circle)
 window.draw()

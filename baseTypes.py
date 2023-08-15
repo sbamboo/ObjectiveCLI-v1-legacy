@@ -80,20 +80,17 @@ class window():
             addargs["autoGenerate"] = True
         if self.drawOnCreation == True:
             addargs["autoDraw"] = True
-            sobj = classObj(**addargs,*args,**kwargs)
+        kwargs.update(addargs)
+        sobj = classObj(*args,**kwargs)
         obj = renObject(sobj,sPos,color,palette)
         return self._add(obj)
 
     def create_point(self,char,sPos=tuple,color=None,palette=drawlib.stdpalette):
         classObj = self.drawlib.objects.pointObj
         return self.create_drawlibObj(classObj,sPos=sPos,color=color,palette=palette,char=char,x1=0,y1=0)
-    def create_line(self,char,sPos=tuple,point2=tuple,color=None,palette=drawlib.stdpalette):
-        x1 = 
-        y1 = 
-        x2 = 
-        y2 = 
-        classObj = self.drawlib.objects.lineObj
-        return self.create_drawlibObj(classObj,sPos=sPos,color=color,palette=palette,char=char,x1=0,y1=0)
+    #def create_line(self,char,sPos=tuple,point2=tuple,color=None,palette=drawlib.stdpalette):
+    #    classObj = self.drawlib.objects.lineObj
+    #    return self.create_drawlibObj(classObj,sPos=sPos,color=color,palette=palette,char=char,x1=0,y1=0)
     def create_circle(self,char,sPos=tuple,radius=int,color=None,palette=drawlib.stdpalette):
         classObj = self.drawlib.objects.circleObj
         return self.create_drawlibObj(classObj,sPos=sPos,color=color,palette=palette,char=char,xM=0,yM=0,r=radius)
