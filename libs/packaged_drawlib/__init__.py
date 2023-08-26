@@ -10,9 +10,16 @@ from . import SimpleSpriteRenderer
 from . import tools
 from . import tui
 from . import imaging
+from . import manip
+from . import generators
 
 fill_terminal = linedraw.fill_terminal
+reset_write_head = linedraw.reset_write_head
 stdpalette = coloring.getStdPalette()
+baseGenerator = generators.baseGenerator
+repeatGenerator = generators.repeatGenerator
+numberGenerator = generators.numberGenerator
+rainbowGeneratorZero = generators.rainbowGeneratorZero
 
 class DrawlibRenderer():
     def __init__(self):
@@ -29,4 +36,10 @@ class DrawlibRenderer():
         self.tui = tui
         self.stdpalette = stdpalette
         self.fill_terminal = linedraw.fill_terminal
+        self.reset_write_head = linedraw.reset_write_head
         self.imaging = imaging
+        self.manip = manip
+        self.baseGenerator = baseGenerator
+        self.repeatGenerator = repeatGenerator
+        self.numberGenerator = numberGenerator
+        self.rainbowGeneratorZero = rainbowGeneratorZero
