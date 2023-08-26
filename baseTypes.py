@@ -13,7 +13,7 @@ class renObject():
     def texturize(self):
         self.texture = self.renderObj.asTexture()
     def untexturize(self):
-        self.texure = None
+        self.texture = None
     def setPos(self,nPos=tuple):
         self.pos = (nPos[0],nPos[1])
     def draw(self):
