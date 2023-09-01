@@ -2,27 +2,6 @@ import time
 from getDrawlib import getDrawlib
 drawlib = getDrawlib()
 
-def getTopLeft(*points):
-    if not points:
-        return None  # Return None if no points are provided
-    x,y = [],[]
-    for point in points:
-        x.append(point[0])
-        y.append(point[1])
-    min_x = min(*x)
-    min_y = min(*y)
-    return (min_x, min_y)
-
-def coordinateDifference(refPoint, leftMost):
-    # Calculate the difference for X and Y
-    diff_x = refPoint[0] - leftMost[0]
-    diff_y = refPoint[1] - leftMost[1]
-    return (diff_x, diff_y)
-
-def addDiffToCoords(coordinates, xDiff, yDiff):
-    updated_coordinates = [(x + xDiff, y + yDiff) for x, y in coordinates]
-    return updated_coordinates
-
 class renObject():
     def __init__(self,renderObj,color=None,palette=drawlib.stdpalette,autoTexture=False,asTexture=True):
         self.pos = (None,None)
@@ -45,9 +24,9 @@ class renObject():
         self.texture = None
         self.splitPixelGroup = None
     def _chgPos(self):
-        topLeft = getTopLeft(self.splitPixelGroup["po"])
-        diffs = coordinateDifference(self.pos,topLeft)
-        self.splitPixelGroup["po"] = addDiffToCoords(self.splitPixelGroup["po"],diffs[0],diffs[1])
+        topLeft = drawlib.tools.getTopLeft(self.splitPixelGroup["po"])
+        diffs = drawlib.tools.coordinateDifference(self.pos,topLeft)
+        self.splitPixelGroup["po"] = drawlib.tools.addDiffToCoords(self.splitPixelGroup["po"],diffs[0],diffs[1])
     def setPos(self,nPos=tuple):
         self.pos = (nPos[0],nPos[1])
         if self.asTexture == False: self._chgPos()
@@ -55,16 +34,18 @@ class renObject():
         if self.asTexture == True:
             self.pos = (self.pos[0]+addX,self.pos[1]+addY)
         else:
-            topLeft = getTopLeft(self.splitPixelGroup["po"])
+            topLeft = drawlib.tools.getTopLeft(self.splitPixelGroup["po"])
             newPos = (topLeft[0],+addX,topLeft[1]+addY)
-            diffs = coordinateDifference(newPos,topLeft)
-            self.splitPixelGroup["po"] = addDiffToCoords(self.splitPixelGroup["po"],diffs[0],diffs[1])
+            diffs = drawlib.tools.coordinateDifference(newPos,topLeft)
+            self.splitPixelGroup["po"] = drawlib.tools.addDiffToCoords(self.splitPixelGroup["po"],diffs[0],diffs[1])
     def stretchShape2X(self,axis="x",lp=True):
         if self.asTexture == True:
+            if self.texture == None: self.texturize()
             texture = drawlib.coreTypes._split_with_delimiter(self.texture,"\n")
             texture = drawlib.manip.stretchShape(texture,axis=axis,lp=lp)
             self.texture = drawlib.coreTypes._join_with_delimiter(texture,"\n")
         else:
+            if self.splitPixelGroup == None: self.texturize()
             cmpxPixelGroup = drawlib.coreTypes.splitPixelGroup_to_cmpxPixelGroup(self.splitPixelGroup)
             sprite = drawlib.coreTypes.cmpxPixelGroup_to_sprite(cmpxPixelGroup)
             x,y,texture = drawlib.coreTypes.sprite_to_texture(sprite)
@@ -76,19 +57,43 @@ class renObject():
             self.splitPixelGroup = drawlib.coreTypes.cmpxPixelGroup_to_splitPixelGroup(cmpxPixelGroup2)
     def fillShape(self,fillChar=str):
         if self.asTexture == True:
+            if self.texture == None: self.texturize()
             texture = drawlib.coreTypes._split_with_delimiter(self.texture,"\n")
-            texture = drawlib.manip.fillShape(texture,fillChar)
+            texture = drawlib.manip.fillShape(texture,fillChar=fillChar)
             self.texture = drawlib.coreTypes._join_with_delimiter(texture,"\n")
         else:
+            if self.splitPixelGroup == None: self.texturize()
             cmpxPixelGroup = drawlib.coreTypes.splitPixelGroup_to_cmpxPixelGroup(self.splitPixelGroup)
             sprite = drawlib.coreTypes.cmpxPixelGroup_to_sprite(cmpxPixelGroup)
             x,y,texture = drawlib.coreTypes.sprite_to_texture(sprite)
             texture = drawlib.coreTypes._split_with_delimiter(texture,"\n")
-            texture = drawlib.manip.fillShape(texture,fillChar)
+            texture = drawlib.manip.fillShape(texture,fillChar=fillChar)
             texture = drawlib.coreTypes._join_with_delimiter(texture,"\n")
             sprite2 = drawlib.coreTypes.texture_to_sprite(texture,x,y)
             cmpxPixelGroup2 = drawlib.coreTypes.sprite_to_cmpxPixelGroup(sprite2,exclusionChar=" ")
             self.splitPixelGroup = drawlib.coreTypes.cmpxPixelGroup_to_splitPixelGroup(cmpxPixelGroup2)
+    def rotateShape(self,degrees,fixTopLeft=False):
+        if self.asTexture == True:
+            if self.texture == None: self.texturize()
+            sprite = drawlib.coreTypes.texture_to_sprite(self.texture)
+            cmpxPixelGroup = drawlib.coreTypes.sprite_to_cmpxPixelGroup(sprite)
+            splitPixelGroup = drawlib.coreTypes.cmpxPixelGroup_to_splitPixelGroup(cmpxPixelGroup)
+            splitPixelGroup = drawlib.manip.rotateSplitPixelGroup(splitPixelGroup, degrees, fixTopLeft)
+            cmpxPixelGroup = drawlib.coreTypes.splitPixelGroup_to_cmpxPixelGroup(splitPixelGroup)
+            sprite = drawlib.coreTypes.cmpxPixelGroup_to_sprite(cmpxPixelGroup)
+            x,y,self.texture = drawlib.coreTypes.sprite_to_texture(sprite)
+        else:
+            if self.splitPixelGroup == None: self.texturize()
+            self.splitPixelGroup = drawlib.manip.rotateSplitPixelGroup(self.splitPixelGroup, degrees, fixTopLeft)
+    def getTopLeft(self):
+        if self.asTexture == True:
+            if self.texture == None: self.texturize()
+            sprite = drawlib.coreTypes.texture_to_sprite(self.texture,self.pos[0],self.pos[1])
+            char,pixels = drawlib.coreTypes.sprite_to_pixelGroup(sprite, char="#", exclusionChar=" ")
+            return drawlib.tools.getTopLeft(pixels)
+        else:
+            if self.splitPixelGroup == None: self.texturize()
+            return drawlib.tools.getTopLeft(self.splitPixelGroup["po"])
     def draw(self):
         if self.asTexture == True:
             if self.texture == None: self.texturize()
@@ -185,6 +190,14 @@ class window():
         obj = self._get(id)
         obj.fillShape(fillChar)
 
+    def rotateShape(self,id,degrees=int,fixTopLeft=False):
+        obj = self._get(id)
+        obj.rotateShape(degrees,fixTopLeft)
+
+    def getTopLeft(self,id):
+        obj = self._get(id)
+        return obj.getTopLeft()
+
     def create_drawlibObj(self,classObj,color=None,palette=drawlib.stdpalette,asTexture=False,*args,**kwargs):
         addargs = {}
         if self.generateOnCreation == True:
@@ -209,11 +222,11 @@ class window():
         return self.create_drawlibObj(classObj,color=color,palette=palette,charset=charset,x1=p1[0],y1=p1[1],x2=p2[0],y2=p2[1],x3=p3[0],y3=p3[1],autoGenerate=autoGenerate)
     
     def create_rectangle(self,charset,p1=tuple,p2=tuple,p3=tuple,p4=tuple,color=None,palette=drawlib.stdpalette,autoGenerate=False):
-        classObj = self.drawlib.objects.triangleObj
+        classObj = self.drawlib.objects.rectangleObj
         return self.create_drawlibObj(classObj,color=color,palette=palette,charset=charset,x1=p1[0],y1=p1[1],x2=p2[0],y2=p2[1],x3=p3[0],y3=p3[1],x4=p4[0],y4=p4[1],autoGenerate=autoGenerate)
 
     def create_rectangle2(self,charset,p1=tuple,p2=tuple,color=None,palette=drawlib.stdpalette,autoGenerate=False):
-        classObj = self.drawlib.objects.triangleObj
+        classObj = self.drawlib.objects.rectangleObj2
         return self.create_drawlibObj(classObj,color=color,palette=palette,charset=charset,c1=p1,c2=p2,autoGenerate=autoGenerate)
 
     def create_circle(self,charset,p1=tuple,radius=int,color=None,palette=drawlib.stdpalette,autoGenerate=False):
@@ -221,15 +234,15 @@ class window():
         return self.create_drawlibObj(classObj,color=color,palette=palette,charset=charset,xM=p1[0],yM=p1[1],r=radius,autoGenerate=autoGenerate)
     
     def create_ellipse(self,charset,p1=tuple,radius1=int,radius2=int,color=None,palette=drawlib.stdpalette,autoGenerate=False):
-        classObj = self.drawlib.objects.circleObj
+        classObj = self.drawlib.objects.ellipseObj
         return self.create_drawlibObj(classObj,color=color,palette=palette,charset=charset,cX=p1[0],cY=p1[1],xRad=radius1,yRad=radius2,autoGenerate=autoGenerate)
     
     def create_quadBezier(self,charset,sp=tuple,cp=tuple,ep=tuple,color=None,palette=drawlib.stdpalette,autoGenerate=False):
-        classObj = self.drawlib.objects.circleObj
+        classObj = self.drawlib.objects.quadBezierObj
         return self.create_drawlibObj(classObj,color=color,palette=palette,charset=charset,sX=sp[0],sY=sp[1],cX=cp[0],cY=cp[1],eX=ep[0],eY=ep[1],autoGenerate=autoGenerate)
 
     def create_cubicBezier(self,charset,sp=tuple,c1=tuple,c2=tuple,ep=tuple,algorithm="step",modifier=None,color=None,palette=drawlib.stdpalette,autoGenerate=False):
-        classObj = self.drawlib.objects.circleObj
+        classObj = self.drawlib.objects.cubicBezierObj
         return self.create_drawlibObj(classObj,color=color,palette=palette,charset=charset,sX=sp[0],sY=sp[1],c1X=c1[0],c1Y=c1[1],c2X=c2[0],c2Y=c2[1],eX=ep[0],eY=ep[1],algorithm=algorithm,modifier=modifier,autoGenerate=autoGenerate)
     
     def create_assetFile(self,filepath=str,color=None,palette=drawlib.stdpalette,autoGenerate=False):
