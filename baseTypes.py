@@ -14,7 +14,12 @@ class renObject():
             self.texturize()
     def texturize(self):
         if self.asTexture == True:
-            x,y,self.texture = self.renderObj.asTexture()
+            try:
+                x,y,self.texture = self.renderObj.asTexture()
+            except:
+                self.texture = self.renderObj.asTexture()
+                x = self.renderObj.xPos
+                y = self.renderObj.yPos
             self.pos = (x,y)
             if type(self.texture) == list:
                 self.texture = drawlib.coreTypes._join_with_delimiter(self.texture,"\n")
@@ -76,7 +81,7 @@ class renObject():
         if self.asTexture == True:
             if self.texture == None: self.texturize()
             sprite = drawlib.coreTypes.texture_to_sprite(self.texture)
-            cmpxPixelGroup = drawlib.coreTypes.sprite_to_cmpxPixelGroup(sprite)
+            cmpxPixelGroup = drawlib.coreTypes.sprite_to_cmpxPixelGroup(sprite," ")
             splitPixelGroup = drawlib.coreTypes.cmpxPixelGroup_to_splitPixelGroup(cmpxPixelGroup)
             splitPixelGroup = drawlib.manip.rotateSplitPixelGroup(splitPixelGroup, degrees, fixTopLeft)
             cmpxPixelGroup = drawlib.coreTypes.splitPixelGroup_to_cmpxPixelGroup(splitPixelGroup)
@@ -85,6 +90,19 @@ class renObject():
         else:
             if self.splitPixelGroup == None: self.texturize()
             self.splitPixelGroup = drawlib.manip.rotateSplitPixelGroup(self.splitPixelGroup, degrees, fixTopLeft)
+    def fillBoundaryGap(self):
+        if self.asTexture == True:
+            if self.texture == None: self.texturize()
+            sprite = drawlib.coreTypes.texture_to_sprite(self.texture)
+            cmpxPixelGroup = drawlib.coreTypes.sprite_to_cmpxPixelGroup(sprite," ")
+            splitPixelGroup = drawlib.coreTypes.cmpxPixelGroup_to_splitPixelGroup(cmpxPixelGroup)
+            splitPixelGroup = drawlib.manip.fillBoundaryGap(splitPixelGroup)
+            cmpxPixelGroup = drawlib.coreTypes.splitPixelGroup_to_cmpxPixelGroup(splitPixelGroup)
+            sprite = drawlib.coreTypes.cmpxPixelGroup_to_sprite(cmpxPixelGroup)
+            x,y,self.texture = drawlib.coreTypes.sprite_to_texture(sprite)
+        else:
+            if self.splitPixelGroup == None: self.texturize()
+            self.splitPixelGroup = drawlib.manip.fillBoundaryGap(self.splitPixelGroup)
     def getTopLeft(self):
         if self.asTexture == True:
             if self.texture == None: self.texturize()
@@ -112,6 +130,13 @@ class window():
         self.generateOnCreation = generateOnCreation
         self.drawOnCreation = drawOnCreation
         self.drawnObjects = []
+    def resetHead(self,x=0,y=0):
+        drawlib.linedraw.reset_write_head(x,y)
+    def reset(self,clear=True):
+        self.objects = {}
+        self.drawnObjects = []
+        if clear == True:
+            self.clear()
     def _add(self, object=object, id=None) -> str:
         if id == None:
             i = str(len(self.objects.keys()))
@@ -178,7 +203,7 @@ class window():
         if self.drawOnUpdate == True:
             self.redraw()
     def move(self,id,addX,addY):
-        self._moveto(id,addX,addY)
+        self._move(id,addX,addY)
         if self.drawOnUpdate == True:
             self.redraw()
 
@@ -193,6 +218,10 @@ class window():
     def rotateShape(self,id,degrees=int,fixTopLeft=False):
         obj = self._get(id)
         obj.rotateShape(degrees,fixTopLeft)
+
+    def fillBoundaryGap(self,id):
+        obj = self._get(id)
+        obj.fillBoundaryGap()
 
     def getTopLeft(self,id):
         obj = self._get(id)
@@ -253,11 +282,15 @@ class window():
         classObj = self.drawlib.objects.assetTexture
         return self.create_drawlibObj(classObj,color=color,palette=palette,filepath=filepath,posov=p1,autoGenerate=autoGenerate)
     
-    def create_boxImage(self, charset=None, p1=tuple, imagePath=str,mode="foreground",monochrome=False,width=None,height=None,resampling="lanczos",method=None,strTxtMethod=False, color=None,palette=drawlib.stdpalette):
+    def create_boxImage(self, p1=tuple,imagePath=str,charset=None, mode="foreground",monochrome=False,width=None,height=None,resampling="lanczos",method=None,strTxtMethod=False, color=None,palette=drawlib.stdpalette,exNonTexture=False):
         classObj = self.drawlib.imaging.boxImage
-        return self.create_drawlibObj(classObj,color=color,palette=palette,asTexture=True, imagePath=imagePath,mode=mode,char=charset,monochrome=monochrome,width=width,height=height,resampling=resampling,method=method,strTxtMethod=strTxtMethod)
+        if exNonTexture == True: asT = False
+        else: asT = True
+        return self.create_drawlibObj(classObj,color=color,palette=palette,asTexture=asT, imagePath=imagePath,mode=mode,char=charset,monochrome=monochrome,width=width,height=height,resampling=resampling,method=method,strTxtMethod=strTxtMethod,xPos=p1[0],yPos=p1[1])
 
-    def create_asciiImage(self, charset=None, p1=tuple, imagePath=str,mode="standard",pc=False,method="lum",invert=False,monochrome=False,width=None,height=None,resampling="lanczos",strTxtMethod=False, color=None,palette=drawlib.stdpalette):
+    def create_asciiImage(self, p1=tuple,imagePath=str,charset=None, mode="standard",pc=False,method="lum",invert=False,monochrome=False,width=None,height=None,resampling="lanczos",strTxtMethod=False, color=None,palette=drawlib.stdpalette,exNonTexture=False):
         classObj = self.drawlib.imaging.asciiImage
-        return self.create_drawlibObj(classObj,color=color,palette=palette,asTexture=True, imagePath=imagePath,mode=mode,pc=pc,method=method,invert=invert,monochrome=monochrome,width=width,height=height,resampling=resampling,strTxtMethod=strTxtMethod,char=charset,xPos=p1[0],yPos=p1[1])
+        if exNonTexture == True: asT = False
+        else: asT = Tru
+        return self.create_drawlibObj(classObj,color=color,palette=palette,asTexture=asT, imagePath=imagePath,mode=mode,pc=pc,method=method,invert=invert,monochrome=monochrome,width=width,height=height,resampling=resampling,strTxtMethod=strTxtMethod,char=charset,xPos=p1[0],yPos=p1[1])
         
